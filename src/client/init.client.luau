@@ -1,9 +1,13 @@
+local AudioController = require(script.AudioController)
 local MainMenu = require(script.MainMenu)
 local RoundHud = require(script.RoundHud)
 local RoleHud = require(script.RoleHud)
 local ResultScreen = require(script.ResultScreen)
+local AmbientEffects = require(script.AmbientEffects)
 
+AudioController.init()
 MainMenu.init()
 RoundHud.init()
 RoleHud.init()
 ResultScreen.init()
+AmbientEffects.init()

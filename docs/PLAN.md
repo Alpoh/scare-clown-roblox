@@ -43,11 +43,12 @@ Regla elegida: el Clown gana si atrapa a todos los sobrevivientes antes de que s
 - [x] Vuelta automática a `Waiting` — ya la daba `RoundManager` de fábrica (el timer de `Ended` no cambió); confirmado que el ciclo completo se repite solo.
 - **Prueba:** `multiplayer_playtest` con 3 clientes, ronda completa sin intervención manual del estado — el clown atrapó a los dos sobrevivientes, `Playing` se cortó antes de sus 60s, todos los clientes vieron "EL CLOWN GANO", y el juego volvió solo a `Waiting` y arrancó un nuevo ciclo. La rama "tiempo agotado → ganan los sobrevivientes" queda cubierta por construcción (mismo `declareResult`, solo que disparado por el `Ended` natural en vez del corte anticipado) pero no se re-verificó por separado en este playtest por el tiempo que toma dejar correr los 60s completos.
 
-## Fase 5 — Atmósfera y audio
+## Fase 5 — Atmósfera y audio ✅ (hecho)
 
-- [ ] Música ambiente + stings de susto, conectados al toggle "MUSICA: ON/OFF" ya existente en Ajustes.
-- [ ] Iluminación/efectos de terror en el mapa (esto sí se edita directo en Studio, no vía Rojo).
-- **Prueba:** confirmar en playtest que el toggle de música realmente silencia/reactiva el audio (hoy solo cambia el texto).
+- [x] Música ambiente (`SoundService.AmbientMusic`, asset de Creator Store insertado tras habilitar "Allow Loading Third Party Assets") + sting de susto (`SoundService.CatchSting`) al atrapar a alguien. `src/client/AudioController.luau` controla ambos; el toggle "MUSICA: ON/OFF" del menú ahora silencia/reactiva el audio real (antes solo cambiaba el texto).
+- [x] Iluminación/efectos de terror: `Lighting` (ambient oscuro, fog rojo/negro, `Atmosphere` con haze, `SunRays` apagado) configurado directo en Studio (no vía Rojo). Luces de punto parpadeantes (`Workspace.Map.Lights`) animadas por `src/client/AmbientEffects.luau`.
+- **Prueba:** verificado en playtest que el toggle de música cambia `Volume` del `Sound` real (no solo el texto) y que las luces parpadean (medido con `GetPropertyChangedSignal` — 7 cambios de brillo en 3s).
+- **Bug encontrado y corregido durante el testing:** `AmbientEffects` inicialmente no producía parpadeo porque `lights:GetChildren()` se leía justo después de `WaitForChild("Lights")`, antes de que los hijos (las luces) terminaran de replicarse al cliente — carrera de replicación silenciosa, sin error. Se corrigió combinando el barrido inicial con `lights.ChildAdded:Connect(tryFlicker)`, patrón robusto para instancias que llegan después.
 
 ## Fase 6 — Persistencia y progresión
 

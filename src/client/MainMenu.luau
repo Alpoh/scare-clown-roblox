@@ -3,6 +3,7 @@ local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local GameVersion = require(ReplicatedStorage.Shared.GameVersion)
+local AudioController = require(script.Parent.AudioController)
 
 local MainMenu = {}
 
@@ -336,7 +337,7 @@ function MainMenu.init()
 	musicToggle.MouseButton1Click:Connect(function()
 		musicOn = not musicOn
 		musicToggle.Text = musicOn and "MUSICA: ON" or "MUSICA: OFF"
-		screenGui:SetAttribute("MusicEnabled", musicOn)
+		AudioController.setMusicEnabled(musicOn)
 	end)
 
 	playButton.MouseButton1Click:Connect(function()

@@ -1,6 +1,8 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local AudioController = require(script.Parent.AudioController)
+
 local FLASH_DURATION = 4
 
 local RoleHud = {}
@@ -55,6 +57,7 @@ function RoleHud.init()
 	playerCaughtRemote.OnClientEvent:Connect(function(victim)
 		local victimName = victim and victim.Name or "?"
 		flashRole(victimName .. " FUE ATRAPADO")
+		AudioController.playCatchSting()
 	end)
 end
 

@@ -58,6 +58,12 @@ Luau no es un lenguaje de clases, pero los mismos principios aplican a nivel de 
 - Reusa instancias (pooling) para efectos/objetos que se crean y destruyen con frecuencia (proyectiles, partículas de jumpscare, etc.) en vez de `Instance.new`/`Destroy` constante.
 - `TweenService` para animaciones de UI/objetos en vez de loops manuales con `RunService`.
 
+## Replicación cliente/servidor (instancias que llegan tarde)
+
+- `WaitForChild` en un padre solo garantiza que el padre existe, **no** que sus hijos ya replicaron al cliente. Iterar `padre:GetChildren()` justo después de un `WaitForChild(padre)` puede ver una lista vacía o incompleta sin ningún error — falla en silencio.
+- Para instancias creadas dinámicamente (o que llegan después por streaming), combinar el barrido inicial con `padre.ChildAdded:Connect(handler)` — el mismo handler procesa lo que ya está y lo que llegue después. No asumir que "no hay hijos todavía" significa "no van a llegar".
+- Caso real: `src/client/AmbientEffects.luau` (Fase 5) no producía parpadeo porque `lights:GetChildren()` se leía antes de que las luces terminaran de replicarse; no había ningún error que lo delatara, solo cero efecto. Se corrigió con el patrón `GetChildren()` + `ChildAdded`.
+
 ## UI
 
 - Tamaños y posiciones en escala (`UDim2.fromScale` / componente `Scale`, no `Offset` fijo) para que funcione en cualquier resolución — clave en un juego con soporte de PC/móvil.
