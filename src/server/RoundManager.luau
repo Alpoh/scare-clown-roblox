@@ -14,6 +14,7 @@ RoundManager.StateChanged = stateChangedBindable.Event
 local currentState = RoundState.Waiting
 local stateDuration = 0
 local stateStartClock = 0
+local endPlayingRequested = false
 
 local function ensureRemote()
 	local remote = ReplicatedStorage:FindFirstChild("RoundStateChanged")
@@ -37,6 +38,10 @@ function RoundManager.getState()
 	return currentState
 end
 
+function RoundManager.endPlayingEarly()
+	endPlayingRequested = true
+end
+
 function RoundManager.init()
 	roundStateChangedEvent = ensureRemote()
 
@@ -55,7 +60,13 @@ function RoundManager.init()
 			task.wait(RoundConfig.Starting)
 
 			setState(RoundState.Playing, RoundConfig.Playing)
-			task.wait(RoundConfig.Playing)
+			endPlayingRequested = false
+			local elapsed = 0
+			while elapsed < RoundConfig.Playing and not endPlayingRequested do
+				local step = math.min(1, RoundConfig.Playing - elapsed)
+				task.wait(step)
+				elapsed += step
+			end
 
 			setState(RoundState.Ended, RoundConfig.Ended)
 			task.wait(RoundConfig.Ended)

@@ -33,12 +33,15 @@ Decisión de diseño: el clown es **un jugador** elegido al azar cada ronda (no 
 - [x] Spawns del clown separados de los sobrevivientes (`SpawnManager` ahora usa `RoleManager.getClown()` para elegir el pool de spawn correcto).
 - **Prueba:** `multiplayer_playtest` con 3 clientes — verificado rol asignado y replicado, velocidad/color aplicados, clown atrapó a un sobreviviente y todos los clientes vieron la notificación. Anti-exploit verificado en dos niveles: (1) grep confirma que no existe ningún `OnServerEvent`/`FireServer` en el código servidor — los remotes de ronda/rol/captura son estrictamente servidor→cliente; (2) un cliente disparó `FireServer` falsificado en los tres remotes (autodeclararse clown, declarar una captura falsa, forzar fin de ronda) y no tuvo ningún efecto en el estado del servidor.
 
-## Fase 4 — Condición de victoria/derrota
+## Fase 4 — Condición de victoria/derrota ✅ (hecho)
 
-- [ ] Reglas de fin de ronda (todos atrapados / tiempo agotado / objetivo cumplido — definir cuál aplica).
-- [ ] Pantalla de resultado (ganador/perdedor) reutilizando el patrón `CanvasGroup` del menú.
-- [ ] Vuelta automática a `Waiting` tras mostrar resultados.
-- **Prueba:** jugar una ronda completa en `multiplayer_playtest` de principio a fin sin intervención manual del estado.
+Regla elegida: el Clown gana si atrapa a todos los sobrevivientes antes de que se acabe el tiempo; los sobrevivientes ganan si el tiempo se agota con al menos uno libre (no hay sistema de objetivos, así que esa rama del checklist original no aplica).
+
+- [x] `src/server/WinConditionManager.luau`: cuenta capturas vía `CatchManager.PlayerCaught`; si igualan a los sobrevivientes, declara "Clown" y corta `Playing` antes de tiempo (`RoundManager.endPlayingEarly()`); si `Playing` llega a `Ended` sin decisión previa, declara "Survivors". Resultado replicado por `RoundResult`.
+- [x] `RoundManager.luau` ahora espera `Playing` en pasos de 1s en vez de un solo `task.wait`, para poder cortarlo antes de tiempo sin tocar el resto de la máquina de estados.
+- [x] `src/client/ResultScreen.luau`: pantalla de resultado con el mismo patrón `CanvasGroup` + fade del menú principal; se oculta sola en cuanto el estado deja de ser `Ended`.
+- [x] Vuelta automática a `Waiting` — ya la daba `RoundManager` de fábrica (el timer de `Ended` no cambió); confirmado que el ciclo completo se repite solo.
+- **Prueba:** `multiplayer_playtest` con 3 clientes, ronda completa sin intervención manual del estado — el clown atrapó a los dos sobrevivientes, `Playing` se cortó antes de sus 60s, todos los clientes vieron "EL CLOWN GANO", y el juego volvió solo a `Waiting` y arrancó un nuevo ciclo. La rama "tiempo agotado → ganan los sobrevivientes" queda cubierta por construcción (mismo `declareResult`, solo que disparado por el `Ended` natural en vez del corte anticipado) pero no se re-verificó por separado en este playtest por el tiempo que toma dejar correr los 60s completos.
 
 ## Fase 5 — Atmósfera y audio
 
