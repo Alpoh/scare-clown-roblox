@@ -7,6 +7,9 @@ local RoundConfig = require(ReplicatedStorage.Shared.RoundConfig)
 local RoundManager = {}
 
 local roundStateChangedEvent
+local stateChangedBindable = Instance.new("BindableEvent")
+
+RoundManager.StateChanged = stateChangedBindable.Event
 
 local currentState = RoundState.Waiting
 local stateDuration = 0
@@ -27,6 +30,7 @@ local function setState(state, duration)
 	stateDuration = duration
 	stateStartClock = os.clock()
 	roundStateChangedEvent:FireAllClients(state, duration)
+	stateChangedBindable:Fire(state, duration)
 end
 
 function RoundManager.getState()

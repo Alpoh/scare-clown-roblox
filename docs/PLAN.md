@@ -17,11 +17,11 @@ Fases pequeñas y verificables. Cada fase se cierra con una prueba concreta en S
 - [x] HUD mínimo en cliente (`src/client/RoundHud.luau`) que muestre el estado/temporizador actual (texto simple, sin arte todavía).
 - **Prueba:** `multiplayer_playtest` con 2 clientes — verificado que ambos ven el mismo estado ("Starting" y luego "Playing") al mismo tiempo que el servidor.
 
-## Fase 2 — Mapa y spawn
+## Fase 2 — Mapa y spawn ✅ (hecho)
 
-- [ ] Puntos de spawn de jugadores (`SpawnLocation` o sistema propio) separados del punto de spawn del "clown".
-- [ ] Bloqueo de zona de espera (lobby) mientras `RoundState == Waiting`, liberación al pasar a `Playing`.
-- **Prueba:** `solo_playtest` — el jugador aparece en el lobby, no puede entrar al mapa de juego hasta que inicia la ronda.
+- [x] Puntos de spawn de jugadores (`Workspace.Map.LobbySpawns` como `SpawnLocation`, `Workspace.Map.PlayAreaSpawns` como marcadores) separados del punto de spawn del "clown" (`Workspace.Map.ClownSpawns`, reservado para Fase 3).
+- [x] Bloqueo de zona de espera: `LobbyGate` (pared física en `Workspace.Map`) con `CanCollide=true` mientras `RoundState ~= Playing`; `src/server/SpawnManager.luau` la abre/cierra y teletransporta jugadores según el estado, suscrito a `RoundManager.StateChanged` (sin acoplar `RoundManager` a `SpawnManager`).
+- **Prueba:** `solo_playtest` — verificado que el jugador aparece en el lobby, queda bloqueado físicamente en el gate al intentar cruzar durante `Waiting`, y es liberado + teletransportado al área de juego apenas el estado pasa a `Playing`.
 
 ## Fase 3 — El Clown (enemigo/rol especial)
 
