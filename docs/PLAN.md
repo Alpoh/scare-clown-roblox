@@ -57,11 +57,11 @@ Regla elegida: el Clown gana si atrapa a todos los sobrevivientes antes de que s
 - [x] Reglas de uso documentadas en `docs/CLAUDE.md` (sección "Janitor, Signal y Promise"): cuándo usar cada uno, cómo se integran entre sí (Janitor limpia Signals/Promises automáticamente), y cuándo no usarlos para evitar ceremonia innecesaria. El código existente (`BindableEvent` manuales en `RoundManager`/`RoleManager`/`CatchManager`) se migra de forma oportunista cuando se toque, no en un refactor masivo.
 - **Prueba:** `solo_playtest` — `require` de los tres paquetes desde `ReplicatedStorage.Packages` funciona en runtime (Signal conectado/disparado, Promise resuelta, Janitor limpiando la conexión), verificado con `eval_server_runtime`.
 
-## Fase 7 — Persistencia y progresión
+## Fase 7 — Persistencia y progresión ✅ (hecho)
 
-- [ ] `DataStoreService` para stats básicas (rondas jugadas, veces atrapado, veces como clown).
-- [ ] Guardado en `PlayerRemoving` y `game:BindToClose`.
-- **Prueba:** jugar una ronda, salir, volver a entrar — las stats persisten. Probar también un fallo simulado de DataStore (pcall no debe tumbar el server).
+- [x] `DataStoreService` (store `PlayerStats_v1`) para stats básicas: rondas jugadas, veces atrapado, veces como clown. `src/shared/PlayerStats.luau` (puro: `withDefaults`/`increment`, siempre devuelve tabla nueva) + `src/server/StatsService.luau` (cache en memoria por `UserId`, carga/guarda con `Promise` y reintentos con backoff, nunca un `pcall` sin capturar).
+- [x] Guardado en `PlayerRemoving` y en `game:BindToClose` (con `Promise.all` + `:await()` para esperar a que terminen los guardados antes de que el servidor cierre).
+- **Prueba:** `solo_playtest` — jugué una ronda (subió `RoundsPlayed`/`TimesAsClown`), detuve y reinicié el playtest, los stats se cargaron intactos. `multiplayer_playtest` con 2 clientes — `TimesCaught` sube para la víctima real. Fallo de DataStore simulado (`SetAsync` con un valor no serializable) confirmó que el error se captura sin afectar al resto del servidor (la ronda siguió avanzando con normalidad).
 
 ## Fase 8 — Pulido y balance
 
