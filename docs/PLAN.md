@@ -23,12 +23,15 @@ Fases pequeñas y verificables. Cada fase se cierra con una prueba concreta en S
 - [x] Bloqueo de zona de espera: `LobbyGate` (pared física en `Workspace.Map`) con `CanCollide=true` mientras `RoundState ~= Playing`; `src/server/SpawnManager.luau` la abre/cierra y teletransporta jugadores según el estado, suscrito a `RoundManager.StateChanged` (sin acoplar `RoundManager` a `SpawnManager`).
 - **Prueba:** `solo_playtest` — verificado que el jugador aparece en el lobby, queda bloqueado físicamente en el gate al intentar cruzar durante `Waiting`, y es liberado + teletransportado al área de juego apenas el estado pasa a `Playing`.
 
-## Fase 3 — El Clown (enemigo/rol especial)
+## Fase 3 — El Clown (enemigo/rol especial) ✅ (hecho)
 
-- [ ] Selección server-side de quién es "el clown" al iniciar la ronda (aleatorio o por votación, definir).
-- [ ] IA básica de persecución si el clown es NPC, o kit de habilidad si es un jugador (velocidad, habilidad de "susto").
-- [ ] Condición de atrapar a un jugador (Touched + validación server-side, nunca confiar en el cliente que "me atraparon").
-- **Prueba:** `multiplayer_playtest` con 2-3 clientes — el clown puede atrapar a otro jugador y el servidor registra el evento correctamente; probar que un cliente exploiteado no puede autodeclararse ganador.
+Decisión de diseño: el clown es **un jugador** elegido al azar cada ronda (no NPC) — descarta la rama de IA de persecución del checklist original.
+
+- [x] Selección server-side aleatoria del clown (`src/server/RoleManager.luau`) al entrar a `Starting`, replicada a todos los clientes vía `ClownAssigned`.
+- [x] Kit de habilidad del clown: velocidad aumentada (`WalkSpeed 22` vs `16`) y color distintivo aplicado server-side. Habilidad activa de "susto" queda diferida (no bloquea el testing de esta fase).
+- [x] Condición de atrapar (`src/server/CatchManager.luau`): `Touched` en el `HumanoidRootPart` del clown, validado server-side (ronda en `Playing`, víctima no es el clown, no atrapada ya); congela a la víctima (`WalkSpeed/JumpPower/JumpHeight = 0`) y notifica a todos vía `PlayerCaught`.
+- [x] Spawns del clown separados de los sobrevivientes (`SpawnManager` ahora usa `RoleManager.getClown()` para elegir el pool de spawn correcto).
+- **Prueba:** `multiplayer_playtest` con 3 clientes — verificado rol asignado y replicado, velocidad/color aplicados, clown atrapó a un sobreviviente y todos los clientes vieron la notificación. Anti-exploit verificado en dos niveles: (1) grep confirma que no existe ningún `OnServerEvent`/`FireServer` en el código servidor — los remotes de ronda/rol/captura son estrictamente servidor→cliente; (2) un cliente disparó `FireServer` falsificado en los tres remotes (autodeclararse clown, declarar una captura falsa, forzar fin de ronda) y no tuvo ningún efecto en el estado del servidor.
 
 ## Fase 4 — Condición de victoria/derrota
 

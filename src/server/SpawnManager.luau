@@ -18,21 +18,29 @@ local function getPlayAreaSpawnPoints()
 	return getMap():WaitForChild("PlayAreaSpawns"):GetChildren()
 end
 
+local function getClownSpawnPoints()
+	return getMap():WaitForChild("ClownSpawns"):GetChildren()
+end
+
 local function setGateOpen(isOpen)
 	local gate = getGate()
 	gate.CanCollide = not isOpen
 	gate.Transparency = isOpen and 0.85 or 0.3
 end
 
-local function sendPlayersToPlayArea()
+local function sendPlayersToPlayArea(RoleManager)
 	local spawnPoints = getPlayAreaSpawnPoints()
+	local clownSpawnPoints = getClownSpawnPoints()
 	if #spawnPoints == 0 then
 		return
 	end
+	local clown = RoleManager and RoleManager.getClown()
 	for _, player in ipairs(Players:GetPlayers()) do
 		local character = player.Character
 		if character then
-			local point = spawnPoints[math.random(1, #spawnPoints)]
+			local isClown = player == clown
+			local pool = (isClown and #clownSpawnPoints > 0) and clownSpawnPoints or spawnPoints
+			local point = pool[math.random(1, #pool)]
 			character:PivotTo(point.CFrame + Vector3.new(0, 3, 0))
 		end
 	end
@@ -44,10 +52,10 @@ local function sendPlayersToLobby()
 	end
 end
 
-local function applyState(state)
+local function applyState(state, RoleManager)
 	if state == RoundState.Playing then
 		setGateOpen(true)
-		sendPlayersToPlayArea()
+		sendPlayersToPlayArea(RoleManager)
 	elseif state == RoundState.Waiting then
 		setGateOpen(false)
 		sendPlayersToLobby()
@@ -56,11 +64,11 @@ local function applyState(state)
 	end
 end
 
-function SpawnManager.init(RoundManager)
-	applyState(RoundManager.getState())
+function SpawnManager.init(RoundManager, RoleManager)
+	applyState(RoundManager.getState(), RoleManager)
 
 	RoundManager.StateChanged:Connect(function(state)
-		applyState(state)
+		applyState(state, RoleManager)
 	end)
 end
 
