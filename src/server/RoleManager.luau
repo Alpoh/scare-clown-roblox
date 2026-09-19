@@ -4,7 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RoundState = require(ReplicatedStorage.Shared.RoundState)
 local ListUtils = require(ReplicatedStorage.Shared.ListUtils)
 
-local CLOWN_WALK_SPEED = 22
+local CLOWN_WALK_SPEED = 19
 local CLOWN_COLOR = Color3.fromRGB(230, 60, 30)
 
 local RoleManager = {}

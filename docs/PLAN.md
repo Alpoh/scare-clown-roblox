@@ -63,11 +63,13 @@ Regla elegida: el Clown gana si atrapa a todos los sobrevivientes antes de que s
 - [x] Guardado en `PlayerRemoving` y en `game:BindToClose` (con `Promise.all` + `:await()` para esperar a que terminen los guardados antes de que el servidor cierre).
 - **Prueba:** `solo_playtest` — jugué una ronda (subió `RoundsPlayed`/`TimesAsClown`), detuve y reinicié el playtest, los stats se cargaron intactos. `multiplayer_playtest` con 2 clientes — `TimesCaught` sube para la víctima real. Fallo de DataStore simulado (`SetAsync` con un valor no serializable) confirmó que el error se captura sin afectar al resto del servidor (la ronda siguió avanzando con normalidad).
 
-## Fase 8 — Pulido y balance
+## Fase 8 — Pulido y balance ✅ (hecho)
 
-- [ ] Ajustes reales en el panel de Ajustes (sensibilidad, volumen si aplica, no solo el toggle de música).
-- [ ] Balancing de velocidades/tiempos según feedback de playtesting.
-- [ ] Bug bash general con `multiplayer_playtest`.
+- [x] Ajuste real de volumen: `src/client/UISlider.luau` (slider genérico reutilizable, drag + click-to-jump) reemplaza el toggle ON/OFF; `AudioController.setMusicVolume` ahora recibe un valor continuo 0-1. Sensibilidad de cámara **descartada**: `UserGameSettings.MouseSensitivity` es de solo lectura para scripts de juego en la práctica (`"lacking capability RobloxScript"`), a pesar de que la documentación la muestra como ReadWrite — lo intenté, tiró un error no capturado que mataba todo el arranque del cliente, lo revertí. Implementar sensibilidad real requeriría reemplazar el `PlayerModule`/`CameraModule` por defecto de Roblox, fuera de alcance de "pulido".
+- [x] Bug encontrado y corregido en el camino: el panel de Ajustes (`Frame` sin `Active=true`) dejaba pasar clics en su propio fondo hacia el `Dimmer` de atrás, cerrándose solo. Se corrige con `settingsPanel.Active = true`.
+- [x] Balancing: probé una persecución real (sobreviviente huyendo con `Humanoid:MoveTo`, no teletransporte) vía `multiplayer_playtest` — captura en ~2s con `CLOWN_WALK_SPEED=22`. Bajé la velocidad del clown a `19` (de +37.5% a +18.75% sobre el `WalkSpeed` base de 16). Las duraciones de `RoundConfig` se dejan igual: no hay evidencia real que justifique cambiarlas todavía.
+- [x] Bug bash: un jugador se desconectó a mitad de una ronda `Playing` (`multiplayer_playtest leave_client`) — el servidor no se cayó, el jugador restante se retiró de la cuenta correctamente, y el ciclo de rondas siguió solo hasta `Waiting` con normalidad.
+- **Nota honesta sobre balance:** en un mapa completamente abierto y sin obstáculos (el placeholder de la Fase 2), *cualquier* ventaja de velocidad del clown converge a una captura en pocos segundos — es matemática de persecución, no algo que se arregle solo tocando números. Un balance real necesita geometría de mapa con obstáculos/rutas (fuera del alcance de esta fase) y feedback de jugadores reales, que todavía no existen. El valor `19` es una mejora razonable sobre `22`, no un número "final".
 
 ## Fase 9 — Preparación de release
 

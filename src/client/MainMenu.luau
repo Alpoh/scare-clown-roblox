@@ -4,6 +4,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local GameVersion = require(ReplicatedStorage.Shared.GameVersion)
 local AudioController = require(script.Parent.AudioController)
+local UISlider = require(script.Parent.UISlider)
+
+local function formatPercent(label, value)
+	return string.format("%s %d%%", label, math.floor(value * 100 + 0.5))
+end
 
 local MainMenu = {}
 
@@ -179,9 +184,10 @@ function MainMenu.init()
 	settingsPanel.Name = "SettingsPanel"
 	settingsPanel.AnchorPoint = Vector2.new(0.5, 0.5)
 	settingsPanel.Position = UDim2.new(0.5, 0, 0.5, 0)
-	settingsPanel.Size = UDim2.new(0.34, 0, 0.4, 0)
+	settingsPanel.Size = UDim2.new(0.36, 0, 0.42, 0)
 	settingsPanel.BackgroundColor3 = Color3.fromRGB(12, 8, 8)
 	settingsPanel.Visible = false
+	settingsPanel.Active = true
 	settingsPanel.ZIndex = 6
 	settingsPanel.Parent = root
 
@@ -196,7 +202,7 @@ function MainMenu.init()
 
 	local panelTitle = Instance.new("TextLabel")
 	panelTitle.Name = "PanelTitle"
-	panelTitle.Size = UDim2.new(1, 0, 0.2, 0)
+	panelTitle.Size = UDim2.new(1, 0, 0.14, 0)
 	panelTitle.Position = UDim2.new(0, 0, 0.04, 0)
 	panelTitle.BackgroundTransparency = 1
 	panelTitle.Text = "AJUSTES"
@@ -236,8 +242,36 @@ function MainMenu.init()
 		return btn
 	end
 
-	local musicToggle = makePanelButton("MusicToggle", "MUSICA: ON", 0.32)
-	local closeButton = makePanelButton("CloseButton", "CERRAR", 0.76)
+	local function makePanelLabel(name, posY)
+		local label = Instance.new("TextLabel")
+		label.Name = name
+		label.Size = UDim2.new(0.8, 0, 0.08, 0)
+		label.Position = UDim2.new(0.1, 0, posY, 0)
+		label.BackgroundTransparency = 1
+		label.Font = Enum.Font.Bangers
+		label.TextScaled = true
+		label.TextColor3 = Color3.fromRGB(230, 225, 210)
+		label.TextXAlignment = Enum.TextXAlignment.Left
+		label.ZIndex = 6
+		label.Parent = settingsPanel
+		return label
+	end
+
+	local musicLabel = makePanelLabel("MusicLabel", 0.20)
+	local musicSlider = UISlider.create(settingsPanel, {
+		name = "Music",
+		position = UDim2.new(0.1, 0, 0.30, 0),
+		size = UDim2.new(0.8, 0, 0, 10),
+		initial = AudioController.getMusicVolume(),
+		zIndex = 6,
+		onChanged = function(value)
+			AudioController.setMusicVolume(value)
+			musicLabel.Text = formatPercent("VOLUMEN", value)
+		end,
+	})
+	musicLabel.Text = formatPercent("VOLUMEN", musicSlider.getValue())
+
+	local closeButton = makePanelButton("CloseButton", "CERRAR", 0.62)
 
 	local versionLabel = Instance.new("TextLabel")
 	versionLabel.Name = "VersionLabel"
@@ -315,7 +349,7 @@ function MainMenu.init()
 		end)
 	end
 
-	for _, btn in ipairs({ playButton, settingsButton, musicToggle, closeButton }) do
+	for _, btn in ipairs({ playButton, settingsButton, closeButton }) do
 		setupHover(btn)
 	end
 
@@ -332,13 +366,6 @@ function MainMenu.init()
 	settingsButton.MouseButton1Click:Connect(openSettings)
 	closeButton.MouseButton1Click:Connect(closeSettings)
 	dimmer.MouseButton1Click:Connect(closeSettings)
-
-	local musicOn = true
-	musicToggle.MouseButton1Click:Connect(function()
-		musicOn = not musicOn
-		musicToggle.Text = musicOn and "MUSICA: ON" or "MUSICA: OFF"
-		AudioController.setMusicEnabled(musicOn)
-	end)
 
 	playButton.MouseButton1Click:Connect(function()
 		closeSettings()
