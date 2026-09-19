@@ -71,11 +71,15 @@ Regla elegida: el Clown gana si atrapa a todos los sobrevivientes antes de que s
 - [x] Bug bash: un jugador se desconectó a mitad de una ronda `Playing` (`multiplayer_playtest leave_client`) — el servidor no se cayó, el jugador restante se retiró de la cuenta correctamente, y el ciclo de rondas siguió solo hasta `Waiting` con normalidad.
 - **Nota honesta sobre balance:** en un mapa completamente abierto y sin obstáculos (el placeholder de la Fase 2), *cualquier* ventaja de velocidad del clown converge a una captura en pocos segundos — es matemática de persecución, no algo que se arregle solo tocando números. Un balance real necesita geometría de mapa con obstáculos/rutas (fuera del alcance de esta fase) y feedback de jugadores reales, que todavía no existen. El valor `19` es una mejora razonable sobre `22`, no un número "final".
 
-## Fase 9 — Preparación de release
+## Fase 9 — Preparación de release ✅ (hecho, con una tarea manual pendiente)
 
-- [ ] Ícono y thumbnails del juego.
-- [ ] Revisión final de textos/UI en español.
-- [ ] Última pasada de `docs/CLAUDE.md` para reflejar decisiones tomadas durante el desarrollo.
+- [~] Ícono y thumbnails: **fuera de mi alcance como MCP** — no hay forma de generar imágenes de diseño ni de setear el ícono/thumbnail del lugar (eso vive en Creator Dashboard > Basic Info). Confirmé visualmente dos escenas candidatas (el menú principal con atmósfera para thumbnail; el clown teñido en la niebla roja para ícono) mediante `capture_screenshot`, pero no puedo exportar esos bytes como archivo. **Pendiente manual:** capturar esas mismas escenas con la herramienta de captura nativa de Roblox/Studio (guarda a disco de verdad) y subirlas en Creator Dashboard.
+- [x] Revisión final de textos en español — encontré y corregí 3 errores reales:
+  - `RoundHud`: "La ronda comienza en" chocaba gramaticalmente con el formato `(Ns)` existente → cambiado a "¡Prepárate!".
+  - `RoleHud`: "SOBREVIVE DEL CLOWN" → "SOBREVIVE AL CLOWN" (construcción correcta de "sobrevivir a algo").
+  - `ResultScreen`: "EL CLOWN GANO" → "EL CLOWN GANÓ" (tilde faltante; en español las tildes no se omiten en mayúsculas).
+  - Verificado en playtest que las tres se renderizan correctamente con acentos.
+- [x] Última pasada de `docs/CLAUDE.md`: corregidas dos referencias obsoletas a "IA del clown" (la decisión de Fase 3 fue que el clown es un jugador, no un NPC — el checklist original mencionaba ambas ramas y quedaron restos de texto sin actualizar), y agregada una nota sobre los dos permisos de Studio (`Allow Loading Third Party Assets`, `Enable Studio Access to API Services`) que hubo que activar durante el desarrollo y que antes solo estaban mencionados de pasada en las notas de fase.
 
 ---
 

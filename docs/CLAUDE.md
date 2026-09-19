@@ -8,13 +8,14 @@ Guía de convenciones para trabajar en este proyecto de Roblox. Léelo antes de 
 - Antes de programar: `rojo serve default.project.json` en la carpeta del proyecto y "Connect" en el plugin de Rojo dentro de Studio.
 - Toda UI se construye **por código** (Luau), no como instancias pegadas a mano ni `.rbxm` — así el diff de git muestra los cambios reales. Ver `src/client/MainMenu.luau` como referencia de patrón.
 - Dependencias de terceros vía **Wally** (`wally.toml` + `wally.lock`). Tras clonar el repo o cambiar `wally.toml`: `wally install` (regenera `Packages/`, que está en `.gitignore` — nunca se commitea, solo el `.toml`/`.lock`). Rojo sincroniza `Packages/` a `ReplicatedStorage.Packages`.
+- Permisos de Studio necesarios (Game Settings > Security), sin los cuales fallan cosas silenciosamente o con error confuso: **"Allow Loading Third Party Assets"** (para insertar audio/modelos del Creator Store) y **"Enable Studio Access to API Services"** (para que `DataStoreService` funcione en Studio). Activarlos una vez por lugar, quedan guardados con el place.
 
 ## Estructura de carpetas
 
 ```
 src/
   client/   -> StarterPlayer.StarterPlayerScripts.Client (LocalScripts, UI, input)
-  server/   -> ServerScriptService.Server (lógica autoritativa, rondas, IA)
+  server/   -> ServerScriptService.Server (lógica autoritativa: rondas, roles, captura, condición de victoria, stats)
   shared/   -> ReplicatedStorage.Shared (módulos usados por client y server: constantes, tipos, utils)
 ```
 
@@ -122,7 +123,7 @@ Tres paquetes de Wally que reemplazan patrones ad-hoc que ya aparecían en el c�
 
 - `src/shared/GameVersion.luau` es la única fuente de verdad del número de versión del juego (semver: `MAYOR.MENOR.PARCHE`). Se muestra en la esquina inferior derecha del menú principal.
 - **Regla obligatoria: al cerrar cada fase del `docs/PLAN.md` siempre se hace bump de versión**, nunca se pasa a la siguiente fase sin subir el número. Qué campo subir depende de lo que trajo esa fase, no es automático:
-  - MENOR (`0.X.0`) — la fase agregó una mecánica o sistema nuevo jugable (p. ej. estado de ronda, IA del clown, condición de victoria).
+  - MENOR (`0.X.0`) — la fase agregó una mecánica o sistema nuevo jugable (p. ej. estado de ronda, rol del clown, condición de victoria).
   - PARCHE (`0.1.X`) — la fase fue un ajuste, fix o pulido sobre algo que ya existía, sin mecánica nueva.
   - MAYOR (`X.0.0`) — reservado para el primer release público, no se usa durante el desarrollo por fases.
 - Subir el número en `GameVersion.luau`, commitear, y etiquetar ese commit con `git tag vX.Y.Z` (`git push --tags`). El tag de git y el valor del archivo siempre deben coincidir.

@@ -3,7 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local STATE_LABELS = {
 	Waiting = "Esperando jugadores",
-	Starting = "La ronda comienza en",
+	Starting = "¡Prepárate!",
 	Playing = "Ronda en curso",
 	Ended = "Ronda terminada",
 }

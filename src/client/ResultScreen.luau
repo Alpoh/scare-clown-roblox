@@ -5,7 +5,7 @@ local TweenService = game:GetService("TweenService")
 local RoundState = require(ReplicatedStorage.Shared.RoundState)
 
 local RESULT_TEXT = {
-	Clown = "EL CLOWN GANO",
+	Clown = "EL CLOWN GANÓ",
 	Survivors = "LOS SOBREVIVIENTES ESCAPARON",
 }
 

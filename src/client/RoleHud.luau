@@ -50,7 +50,7 @@ function RoleHud.init()
 		if clown == player then
 			flashRole("ERES EL CLOWN")
 		else
-			flashRole("SOBREVIVE DEL CLOWN")
+			flashRole("SOBREVIVE AL CLOWN")
 		end
 	end)
 
