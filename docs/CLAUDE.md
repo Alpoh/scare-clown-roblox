@@ -28,6 +28,17 @@ Un `init.client.luau` / `init.server.luau` en una carpeta la convierte en el scr
 - `:WaitForChild(nombre, timeout)` con timeout explícito en cualquier código que corra en producción; sin timeout solo en scripts de arranque donde el hijo es garantizado por el propio proyecto.
 - Módulos compartidos (`shared/`) no deben requerir nada de `client/` ni `server/` — la dependencia va siempre hacia adentro (shared es la base).
 
+## Programación funcional (pragmática)
+
+Roblox es un entorno intrínsecamente mutable e imperativo (Instances, `:Connect`, propiedades que cambian solo). No forzamos FP estricta contra eso — la aplicamos donde da valor real: la lógica de decisión.
+
+- Cálculo o decisión (elegir un spawn al azar, decidir quién ganó, validar si una captura es legítima) va en una **función pura**: mismo input → mismo output, sin leer ni escribir Instances de Roblox, sin depender de estado externo oculto. Recibe lo que necesita como parámetros, devuelve un resultado.
+- La parte que sí toca la API de Roblox (crear/mutar Instances, `:Connect`, disparar Remotes) es una capa delgada aparte que llama a la función pura y aplica el resultado. No mezclar cálculo no trivial con el efecto secundario en la misma función.
+- No mutar tablas/parámetros recibidos por argumento; si hay que transformar datos, devolver una tabla nueva.
+- Los módulos "Manager" singleton (`RoundManager`, `RoleManager`, etc.) son la excepción explícita: su rol *es* sostener estado de servidor, así que mutación local de sus variables internas está permitida — pero siempre expuesta a través de funciones (`getState()`), nunca acceso directo a la variable desde otro módulo.
+- Config y constantes (`RoundState`, `RoundConfig`, `GameVersion`) son inmutables por convención: se leen, nunca se reasignan sus campos en runtime.
+- No aplicar nada de esto a la construcción de UI o del mapa (`Instance.new` en cadena) — ahí la API es imperativa por naturaleza y añadir indirección solo complica sin beneficio.
+
 ## Clean Code
 
 - Nombres que dicen qué hacen (`lockCharacter`, `RoundConfig.Playing`), no abreviaturas crípticas ni nombres genéricos (`data`, `temp`, `handle2`).

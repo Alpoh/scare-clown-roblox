@@ -2,6 +2,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local RoundState = require(ReplicatedStorage.Shared.RoundState)
+local ListUtils = require(ReplicatedStorage.Shared.ListUtils)
 
 local CLOWN_WALK_SPEED = 22
 local CLOWN_COLOR = Color3.fromRGB(230, 60, 30)
@@ -24,14 +25,6 @@ local function ensureRemote()
 	return remote
 end
 
-local function pickClown()
-	local players = Players:GetPlayers()
-	if #players == 0 then
-		return nil
-	end
-	return players[math.random(1, #players)]
-end
-
 local function applyClownAppearance(clown)
 	local character = clown.Character
 	if not character then
@@ -49,7 +42,7 @@ local function applyClownAppearance(clown)
 end
 
 local function assignRoles()
-	currentClown = pickClown()
+	currentClown = ListUtils.pickRandom(Players:GetPlayers())
 	if currentClown then
 		applyClownAppearance(currentClown)
 	end

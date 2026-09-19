@@ -29,6 +29,17 @@ local function declareResult(winner)
 	roundResultRemote:FireAllClients(winner)
 end
 
+local function computeSurvivorCount(totalPlayers, hasClown)
+	if hasClown then
+		return math.max(totalPlayers - 1, 0)
+	end
+	return totalPlayers
+end
+
+local function isClownVictory(caughtCount, survivorCount)
+	return survivorCount > 0 and caughtCount >= survivorCount
+end
+
 function WinConditionManager.init(RoundManager, RoleManager, CatchManager)
 	roundResultRemote = ensureRemote()
 
@@ -37,8 +48,7 @@ function WinConditionManager.init(RoundManager, RoleManager, CatchManager)
 			decided = false
 			caughtCount = 0
 			local clown = RoleManager.getClown()
-			local totalPlayers = #Players:GetPlayers()
-			survivorCount = clown and math.max(totalPlayers - 1, 0) or totalPlayers
+			survivorCount = computeSurvivorCount(#Players:GetPlayers(), clown ~= nil)
 		elseif state == RoundState.Ended then
 			declareResult("Survivors")
 		end
@@ -46,7 +56,7 @@ function WinConditionManager.init(RoundManager, RoleManager, CatchManager)
 
 	CatchManager.PlayerCaught:Connect(function()
 		caughtCount += 1
-		if survivorCount > 0 and caughtCount >= survivorCount then
+		if isClownVictory(caughtCount, survivorCount) then
 			declareResult("Clown")
 			RoundManager.endPlayingEarly()
 		end

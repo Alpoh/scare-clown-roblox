@@ -40,12 +40,19 @@ local function freezeCharacter(character)
 	end
 end
 
-local function onClownTouched(clown, hit)
-	if getRoundState() ~= RoundState.Playing then
-		return
+local function isValidCatch(roundState, clown, victim, victimAlreadyCaught)
+	if roundState ~= RoundState.Playing then
+		return false
 	end
+	if not victim or victim == clown then
+		return false
+	end
+	return not victimAlreadyCaught
+end
+
+local function onClownTouched(clown, hit)
 	local victim = getPlayerFromPart(hit)
-	if not victim or victim == clown or caughtPlayers[victim] then
+	if not isValidCatch(getRoundState(), clown, victim, victim and caughtPlayers[victim]) then
 		return
 	end
 	caughtPlayers[victim] = true
