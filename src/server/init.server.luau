@@ -1,3 +1,4 @@
+local AccessControlService = require(script.AccessControlService)
 local RoundManager = require(script.RoundManager)
 local RoleManager = require(script.RoleManager)
 local SpawnManager = require(script.SpawnManager)
@@ -5,6 +6,7 @@ local CatchManager = require(script.CatchManager)
 local WinConditionManager = require(script.WinConditionManager)
 local StatsService = require(script.StatsService)
 
+AccessControlService.init()
 RoleManager.init(RoundManager)
 SpawnManager.init(RoundManager, RoleManager)
 CatchManager.init(RoundManager, RoleManager)

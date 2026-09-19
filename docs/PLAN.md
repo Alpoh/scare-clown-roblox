@@ -81,6 +81,17 @@ Regla elegida: el Clown gana si atrapa a todos los sobrevivientes antes de que s
   - Verificado en playtest que las tres se renderizan correctamente con acentos.
 - [x] Última pasada de `docs/CLAUDE.md`: corregidas dos referencias obsoletas a "IA del clown" (la decisión de Fase 3 fue que el clown es un jugador, no un NPC — el checklist original mencionaba ambas ramas y quedaron restos de texto sin actualizar), y agregada una nota sobre los dos permisos de Studio (`Allow Loading Third Party Assets`, `Enable Studio Access to API Services`) que hubo que activar durante el desarrollo y que antes solo estaban mencionados de pasada en las notas de fase.
 
+## Fase 10 — Acceso controlado para testing cerrado ✅ (hecho, con paso manual pendiente)
+
+Fuera del roadmap original: el objetivo es dejar que solo un círculo cercano (amigos y "amigos de amigos" en Roblox) pueda entrar al juego mientras está en pruebas, sin abrirlo al público general.
+
+- [x] `src/server/AccessControlService.luau`: construye, una vez por sesión de servidor, el conjunto de UserIds permitidos = dueño del juego (`game.CreatorId`, sin hardcodear) + sus amigos directos + los amigos de esos amigos (`Players:GetFriendsAsync`, paginado, vía `Promise`/`Promise.all` para las consultas de segundo grado en paralelo). Cualquier jugador que se una y no esté en el conjunto se expulsa (`Player:Kick`) con un mensaje explicando que el juego está en pruebas cerradas.
+- [x] Solo aplica si el juego es de un usuario (`game.CreatorType == Enum.CreatorType.User`); no corre en juegos de grupo.
+- **Prueba:** `solo_playtest` — el dueño real (mi cuenta) nunca es expulsado. `multiplayer_playtest` con 2 clientes simulados (cuentas de prueba de Studio, no son amigos reales) — ambos fueron expulsados correctamente; confirmado con atributos de diagnóstico temporales que el conjunto permitido se construyó con éxito (1,597 IDs: dueño + amigos + amigos de amigos) y que ambas cuentas de prueba fueron detectadas como no permitidas.
+- **Dato importante para el dueño:** la red real de "amigos + amigos de amigos" dio **~1,600 personas**, muchas más que "algunos amigos y conocidos". Se le mostró este número explícitamente y decidió mantener ese alcance de todas formas en vez de reducirlo a solo amigos directos.
+- **Paso manual pendiente, imposible de automatizar vía MCP:** para que este filtro tenga algún efecto, el juego debe estar configurado como **"Público"** en el Creator Dashboard (Basic Info → Who can play). Mientras siga en "Private" (el default), nadie fuera del dueño puede ni siquiera intentar unirse, y el filtro nunca llega a ejecutarse — la visibilidad del juego vive en el Creator Dashboard del sitio web, no en el DataModel de Studio, así que ningún tool de Studio puede leerla ni cambiarla.
+- **Riesgo aceptado:** con el juego en "Público", cualquier persona (incluida gente fuera de la red permitida) puede momentáneamente conectarse a un servidor antes de ser expulsada por el chequeo (que tarda unos segundos en construirse al iniciar el servidor). Para una fase de pruebas cerrada esto es un riesgo menor, pero no es acceso "verdaderamente privado".
+
 ---
 
 **Nota:** las fases 2–4 y 7–9 son un esqueleto razonable, no un compromiso cerrado (la Fase 6 de dependencias ya quedó fija). Cuando se defina mejor la mecánica exacta (¿el clown es un jugador o un NPC? ¿hay objetivos que recolectar o es solo escapar?), esta lista se ajusta.
