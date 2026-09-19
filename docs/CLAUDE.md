@@ -27,6 +27,24 @@ Un `init.client.luau` / `init.server.luau` en una carpeta la convierte en el scr
 - `:WaitForChild(nombre, timeout)` con timeout explícito en cualquier código que corra en producción; sin timeout solo en scripts de arranque donde el hijo es garantizado por el propio proyecto.
 - Módulos compartidos (`shared/`) no deben requerir nada de `client/` ni `server/` — la dependencia va siempre hacia adentro (shared es la base).
 
+## Clean Code
+
+- Nombres que dicen qué hacen (`lockCharacter`, `RoundConfig.Playing`), no abreviaturas crípticas ni nombres genéricos (`data`, `temp`, `handle2`).
+- Funciones cortas y de un solo nivel de abstracción: una función que arma la UI no debería también decidir reglas de negocio de la ronda. Si una función necesita comentarios tipo "-- ahora hacemos X" para separar bloques, probablemente son dos funciones.
+- Cero números/strings mágicos sueltos en la lógica: duraciones, límites, nombres de estado van a un módulo de config o constantes (`RoundConfig.luau`, `RoundState.luau`), nunca hardcodeados donde se usan.
+- Duplicación: si la misma lógica aparece dos veces (p. ej. crear un botón con corner+stroke+scale), extraer una función helper — ya se hizo con `makeButton`/`makePanelButton` en el menú.
+- **Regla estricta: cero comentarios en el código**, ni de qué hace ni de por qué. Si algo necesita explicación, el nombre de la variable/función/módulo debe cargar con ese significado, o el código se reestructura hasta que sea obvio por sí solo. Nada de `-- Background`, `-- TODO`, `-- por qué hacemos esto`.
+
+## Principios SOLID (aplicados a módulos Luau)
+
+Luau no es un lenguaje de clases, pero los mismos principios aplican a nivel de **módulo**:
+
+- **S — Responsabilidad única:** cada ModuleScript hace una cosa (`RoundManager` solo gestiona el estado de la ronda; no debería además manejar puntajes de jugador o el HUD — eso va en sus propios módulos).
+- **O — Abierto/cerrado:** agregar comportamiento nuevo debería significar *agregar* un módulo/handler, no reescribir un `if/elseif` gigante ya existente. Ej.: nuevas reacciones a cambios de ronda se suscriben a la señal/evento existente en vez de meterse dentro de `RoundManager.setState`.
+- **L — Sustitución:** si dos "cosas" comparten una interfaz (p. ej. distintos tipos de enemigo con `:GetSpeed()`/`:OnCaught()`), cualquiera debe poder reemplazar a la otra sin que el código que las usa necesite saber cuál es cuál.
+- **I — Segregación de interfaces:** preferir varios módulos pequeños con una función clara (`RoundState`, `RoundConfig`, `RoundManager` separados) en vez de un único `GameManager.luau` gigante que todo el mundo importa para todo.
+- **D — Inversión de dependencias:** la lógica de alto nivel no debería depender de detalles concretos de bajo nivel. `shared/` nunca depende de `client/` o `server/` (regla ya vigente en este repo); los sistemas de servidor se comunican por eventos/RemoteEvents/BindableEvents en vez de requerir directamente los internals de otro sistema.
+
 ## Cliente/Servidor (seguridad)
 
 - El servidor es la única fuente de verdad para vidas, rondas, inventario, daño, economía. El cliente nunca decide el resultado de una acción, solo la solicita.
@@ -51,10 +69,21 @@ Un `init.client.luau` / `init.server.luau` en una carpeta la convierte en el scr
 - `DataStoreService` siempre envuelto en `pcall` con reintentos; nunca dejar que un fallo de DataStore tumbe el servidor.
 - Guardar en `game:BindToClose` además de al salir el jugador, para no perder progreso en shutdown por deploy.
 
-## Testing
+## Testing y TDD
 
 - Antes de dar una feature por terminada: probarla con `solo_playtest` (o `multiplayer_playtest` si involucra a más de un jugador) vía el MCP, no asumir que "debería funcionar" por leer el código.
 - Casos a cubrir además del camino feliz: respawn del personaje, un segundo jugador uniéndose a mitad de ronda, desconexión durante una acción en curso.
+- Para lógica no trivial (máquinas de estado, cálculos, reglas de negocio), escribir primero los casos que debe cumplir — aunque sea como plan textual o como llamadas de verificación en `eval_server_runtime`/`eval_client_runtime` — antes de implementar, e implementar hasta que esos casos pasen. Es el mismo espíritu de TDD aplicado sin depender de un framework de test formal.
+- Para que eso sea posible, la lógica pura (sin llamadas a la API de Roblox) debe vivir separada en módulos de `shared/`/`server/` que reciban sus dependencias como parámetros en vez de leer servicios globales directamente — así se puede verificar el comportamiento de un módulo (p. ej. las transiciones de `RoundManager`) llamándolo directo, sin necesitar todo el DataModel montado.
+
+## Versionado
+
+- `src/shared/GameVersion.luau` es la única fuente de verdad del número de versión del juego (semver: `MAYOR.MENOR.PARCHE`). Se muestra en la esquina inferior derecha del menú principal.
+- **Regla obligatoria: al cerrar cada fase del `docs/PLAN.md` siempre se hace bump de versión**, nunca se pasa a la siguiente fase sin subir el número. Qué campo subir depende de lo que trajo esa fase, no es automático:
+  - MENOR (`0.X.0`) — la fase agregó una mecánica o sistema nuevo jugable (p. ej. estado de ronda, IA del clown, condición de victoria).
+  - PARCHE (`0.1.X`) — la fase fue un ajuste, fix o pulido sobre algo que ya existía, sin mecánica nueva.
+  - MAYOR (`X.0.0`) — reservado para el primer release público, no se usa durante el desarrollo por fases.
+- Subir el número en `GameVersion.luau`, commitear, y etiquetar ese commit con `git tag vX.Y.Z` (`git push --tags`). El tag de git y el valor del archivo siempre deben coincidir.
 
 ## Git
 

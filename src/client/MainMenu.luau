@@ -1,5 +1,8 @@
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local GameVersion = require(ReplicatedStorage.Shared.GameVersion)
 
 local MainMenu = {}
 
@@ -25,7 +28,6 @@ function MainMenu.init()
 	root.GroupTransparency = 0
 	root.Parent = screenGui
 
-	-- Background
 	local bg = Instance.new("Frame")
 	bg.Name = "Background"
 	bg.Size = UDim2.fromScale(1, 1)
@@ -42,7 +44,6 @@ function MainMenu.init()
 	bgGradient.Rotation = 65
 	bgGradient.Parent = bg
 
-	-- Diagonal circus tent stripes, dirty/desaturated
 	local stripeHolder = Instance.new("Frame")
 	stripeHolder.Name = "Stripes"
 	stripeHolder.Size = UDim2.fromScale(1, 1)
@@ -64,7 +65,6 @@ function MainMenu.init()
 		stripe.Parent = stripeHolder
 	end
 
-	-- Title
 	local titleShadow = Instance.new("TextLabel")
 	titleShadow.Name = "TitleShadow"
 	titleShadow.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -107,7 +107,6 @@ function MainMenu.init()
 	subtitle.TextTransparency = 0.1
 	subtitle.Parent = root
 
-	-- Buttons
 	local buttonHolder = Instance.new("Frame")
 	buttonHolder.Name = "ButtonHolder"
 	buttonHolder.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -164,7 +163,6 @@ function MainMenu.init()
 	local playButton = makeButton("PlayButton", "JUGAR", 1, true, buttonHolder)
 	local settingsButton = makeButton("SettingsButton", "AJUSTES", 2, false, buttonHolder)
 
-	-- Dimmer (click-outside-to-close), sits above menu content, below settings panel
 	local dimmer = Instance.new("TextButton")
 	dimmer.Name = "Dimmer"
 	dimmer.Size = UDim2.fromScale(1, 1)
@@ -176,7 +174,6 @@ function MainMenu.init()
 	dimmer.ZIndex = 5
 	dimmer.Parent = root
 
-	-- Settings panel
 	local settingsPanel = Instance.new("Frame")
 	settingsPanel.Name = "SettingsPanel"
 	settingsPanel.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -241,9 +238,22 @@ function MainMenu.init()
 	local musicToggle = makePanelButton("MusicToggle", "MUSICA: ON", 0.32)
 	local closeButton = makePanelButton("CloseButton", "CERRAR", 0.76)
 
+	local versionLabel = Instance.new("TextLabel")
+	versionLabel.Name = "VersionLabel"
+	versionLabel.AnchorPoint = Vector2.new(1, 1)
+	versionLabel.Position = UDim2.new(1, -12, 1, -8)
+	versionLabel.Size = UDim2.new(0.12, 0, 0.03, 0)
+	versionLabel.BackgroundTransparency = 1
+	versionLabel.Font = Enum.Font.SourceSans
+	versionLabel.TextScaled = true
+	versionLabel.TextXAlignment = Enum.TextXAlignment.Right
+	versionLabel.TextColor3 = Color3.fromRGB(180, 170, 165)
+	versionLabel.TextTransparency = 0.35
+	versionLabel.Text = "v" .. GameVersion
+	versionLabel.Parent = root
+
 	screenGui.Parent = playerGui
 
-	-- Character movement lock while the menu is open
 	local menuOpen = true
 	local lockedHumanoid, savedWalkSpeed, savedJumpPower, savedJumpHeight
 
@@ -277,7 +287,6 @@ function MainMenu.init()
 		end
 	end)
 
-	-- Flickering carnival-light effect on the title
 	task.spawn(function()
 		while title.Parent do
 			task.wait(math.random(20, 60) / 10)

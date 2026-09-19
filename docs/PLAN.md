@@ -10,12 +10,12 @@ Fases pequeñas y verificables. Cada fase se cierra con una prueba concreta en S
 - [x] Bloqueo de movimiento del personaje mientras el menú está abierto; se libera al presionar JUGAR.
 - **Prueba:** `solo_playtest` — menú visible, AJUSTES abre/cierra panel, JUGAR libera al personaje. Ya verificado.
 
-## Fase 1 — Estado de ronda (servidor autoritativo)
+## Fase 1 — Estado de ronda (servidor autoritativo) ✅ (hecho)
 
-- [ ] Módulo `shared/RoundState.luau` con los estados posibles (`Waiting`, `Starting`, `Playing`, `Ended`) como constantes.
-- [ ] `server/RoundManager.luau`: máquina de estados simple, temporizador de espera antes de iniciar, evento `RoundStateChanged` replicado a los clientes.
-- [ ] HUD mínimo en cliente que muestre el estado/temporizador actual (texto simple, sin arte todavía).
-- **Prueba:** `multiplayer_playtest` con 2 clientes — ambos ven el mismo estado de ronda al mismo tiempo; forzar el timer y confirmar que el cambio de estado llega a los dos.
+- [x] Módulo `shared/RoundState.luau` con los estados posibles (`Waiting`, `Starting`, `Playing`, `Ended`) como constantes.
+- [x] `server/RoundManager.luau`: máquina de estados simple, temporizador de espera antes de iniciar, evento `RoundStateChanged` replicado a los clientes.
+- [x] HUD mínimo en cliente (`src/client/RoundHud.luau`) que muestre el estado/temporizador actual (texto simple, sin arte todavía).
+- **Prueba:** `multiplayer_playtest` con 2 clientes — verificado que ambos ven el mismo estado ("Starting" y luego "Playing") al mismo tiempo que el servidor.
 
 ## Fase 2 — Mapa y spawn
 

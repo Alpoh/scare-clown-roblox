@@ -1,1 +1,3 @@
--- server-side game logic goes here
+local RoundManager = require(script.RoundManager)
+
+RoundManager.init()
