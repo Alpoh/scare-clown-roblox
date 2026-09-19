@@ -7,6 +7,7 @@ Guía de convenciones para trabajar en este proyecto de Roblox. Léelo antes de 
 - Sincronización vía **Rojo** (`default.project.json` + `src/`). El DataModel de Studio se genera desde estos archivos — **nunca edites a mano en Studio** nada que viva bajo una ruta gestionada por Rojo (`ReplicatedStorage.Shared`, `ServerScriptService.Server`, `StarterPlayer.StarterPlayerScripts.Client`); el próximo sync lo sobrescribe. `Workspace`, `Lighting` y el resto de servicios no listados en `default.project.json` sí se editan libremente en Studio (geometría del mapa, iluminación, etc.) porque Rojo no los toca.
 - Antes de programar: `rojo serve default.project.json` en la carpeta del proyecto y "Connect" en el plugin de Rojo dentro de Studio.
 - Toda UI se construye **por código** (Luau), no como instancias pegadas a mano ni `.rbxm` — así el diff de git muestra los cambios reales. Ver `src/client/MainMenu.luau` como referencia de patrón.
+- Dependencias de terceros vía **Wally** (`wally.toml` + `wally.lock`). Tras clonar el repo o cambiar `wally.toml`: `wally install` (regenera `Packages/`, que está en `.gitignore` — nunca se commitea, solo el `.toml`/`.lock`). Rojo sincroniza `Packages/` a `ReplicatedStorage.Packages`.
 
 ## Estructura de carpetas
 
@@ -44,6 +45,30 @@ Luau no es un lenguaje de clases, pero los mismos principios aplican a nivel de 
 - **L — Sustitución:** si dos "cosas" comparten una interfaz (p. ej. distintos tipos de enemigo con `:GetSpeed()`/`:OnCaught()`), cualquiera debe poder reemplazar a la otra sin que el código que las usa necesite saber cuál es cuál.
 - **I — Segregación de interfaces:** preferir varios módulos pequeños con una función clara (`RoundState`, `RoundConfig`, `RoundManager` separados) en vez de un único `GameManager.luau` gigante que todo el mundo importa para todo.
 - **D — Inversión de dependencias:** la lógica de alto nivel no debería depender de detalles concretos de bajo nivel. `shared/` nunca depende de `client/` o `server/` (regla ya vigente en este repo); los sistemas de servidor se comunican por eventos/RemoteEvents/BindableEvents en vez de requerir directamente los internals de otro sistema.
+
+## Janitor, Signal y Promise
+
+Tres paquetes de Wally que reemplazan patrones ad-hoc que ya aparecían en el código (BindableEvents manuales, conexiones sueltas, callbacks anidados). Úsalos en código **nuevo**; el código existente que ya usa el patrón manual (p. ej. los `BindableEvent` de `RoundManager`/`RoleManager`/`CatchManager`) se migra de forma oportunista cuando se toque esa parte, no hace falta una migración masiva solo por tenerlos disponibles.
+
+### Janitor (`require(ReplicatedStorage.Packages.Janitor)`)
+
+- Cualquier módulo/objeto que cree conexiones (`:Connect`), hilos (`task.spawn`), tweens o instancias atadas a un ciclo de vida acotado (una ronda, una pantalla de UI, un personaje, un NPC) debe tener **su propio Janitor** y meter ahí todo lo que necesite limpieza, en vez de guardar conexiones sueltas a mano y desconectarlas una por una.
+- `janitor:Add(objeto)` reconoce automáticamente cómo limpiar tipos conocidos (conexiones → `Disconnect`, instancias → `Destroy`, Promises → `cancel`, otro Janitor → `Destroy`). Para objetos custom, pasa el nombre del método explícito: `janitor:Add(objeto, "MetodoDeLimpieza")`.
+- `janitor:Add(objeto, false, "clave")` (con una clave/índice) permite reemplazar ese recurso más adelante — al volver a `Add` con la misma clave, el anterior se limpia solo. Útil para "la conexión actual del clown" en algo como `CatchManager`, donde cada ronda hay un clown distinto.
+- `janitor:LinkToInstance(instance)` liga la vida del Janitor a una Instance (se limpia solo cuando esa Instance se destruye) — ideal para personajes (`character`) en vez de conectar `AncestryChanged` a mano.
+- No uses Janitor para algo que vive tanto como el propio servidor/cliente (p. ej. el `Signal` de nivel de módulo de `RoundManager`, que existe mientras exista el servidor) — ahí no hay nada que limpiar nunca, agregarle Janitor es ceremonia sin beneficio.
+
+### Signal (`require(ReplicatedStorage.Packages.Signal)`)
+
+- Para eventos **dentro del mismo proceso** (servidor-servidor o cliente-cliente, entre módulos), usa `Signal.new()` en vez de `Instance.new("BindableEvent")`. Misma API (`:Connect`, `:Fire`, `:Wait`), sin dejar una Instance real metida en el DataModel que hay que gestionar.
+- Signal **nunca** reemplaza a `RemoteEvent`/`RemoteFunction` — esos cruzan el límite cliente/servidor y tienen que seguir siendo Instances reales de Roblox.
+- Guarda la conexión que devuelve `:Connect()` si el suscriptor puede morir antes que la señal (p. ej. una UI temporal escuchando una señal de sistema que vive todo el juego) y límpiala con un Janitor. Si el suscriptor vive tanto como la señal misma (la mayoría de nuestros `Manager.init()` a nivel de servidor), no hace falta desconectar nunca.
+
+### Promise (`require(ReplicatedStorage.Packages.Promise)`)
+
+- Para operaciones asíncronas que **pueden fallar** y se benefician de encadenar pasos o manejar error de forma centralizada: llamadas a `DataStoreService` (clave para la Fase 6), HTTP, o cualquier flujo con reintentos/timeout. `:andThen()` / `:catch()` en vez de `pcall` anidados a mano.
+- No envuelvas código síncrono en una Promise "porque sí" — si no hay nada async ni necesitas componer (`Promise.all`, `:andThen` en cadena, `:timeout()`), un `pcall` normal es más simple y es lo que corresponde.
+- Si el objeto dueño de una Promise puede destruirse antes de que resuelva, mete la Promise en su Janitor (`janitor:Add(promise)`) para que se cancele sola — no dejar Promises huérfanas corriendo después de que su dueño ya no existe.
 
 ## Cliente/Servidor (seguridad)
 

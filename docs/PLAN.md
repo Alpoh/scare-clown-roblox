@@ -50,19 +50,26 @@ Regla elegida: el Clown gana si atrapa a todos los sobrevivientes antes de que s
 - **Prueba:** verificado en playtest que el toggle de música cambia `Volume` del `Sound` real (no solo el texto) y que las luces parpadean (medido con `GetPropertyChangedSignal` — 7 cambios de brillo en 3s).
 - **Bug encontrado y corregido durante el testing:** `AmbientEffects` inicialmente no producía parpadeo porque `lights:GetChildren()` se leía justo después de `WaitForChild("Lights")`, antes de que los hijos (las luces) terminaran de replicarse al cliente — carrera de replicación silenciosa, sin error. Se corrigió combinando el barrido inicial con `lights.ChildAdded:Connect(tryFlicker)`, patrón robusto para instancias que llegan después.
 
-## Fase 6 — Persistencia y progresión
+## Fase 6 — Dependencias: Wally, Janitor, Signal, Promise ✅ (hecho)
+
+- [x] **Wally** instalado (CLI) e inicializado (`wally.toml` + `wally.lock` versionados en git; `Packages/` en `.gitignore`, se regenera con `wally install`). `default.project.json` sincroniza `Packages/` a `ReplicatedStorage.Packages`.
+- [x] Dependencias agregadas: `Janitor` (`howmanysmall/janitor@1.18.3`), `Signal` (`sleitnick/signal@1.5.0`), `Promise` (`evaera/promise@4.0.0`).
+- [x] Reglas de uso documentadas en `docs/CLAUDE.md` (sección "Janitor, Signal y Promise"): cuándo usar cada uno, cómo se integran entre sí (Janitor limpia Signals/Promises automáticamente), y cuándo no usarlos para evitar ceremonia innecesaria. El código existente (`BindableEvent` manuales en `RoundManager`/`RoleManager`/`CatchManager`) se migra de forma oportunista cuando se toque, no en un refactor masivo.
+- **Prueba:** `solo_playtest` — `require` de los tres paquetes desde `ReplicatedStorage.Packages` funciona en runtime (Signal conectado/disparado, Promise resuelta, Janitor limpiando la conexión), verificado con `eval_server_runtime`.
+
+## Fase 7 — Persistencia y progresión
 
 - [ ] `DataStoreService` para stats básicas (rondas jugadas, veces atrapado, veces como clown).
 - [ ] Guardado en `PlayerRemoving` y `game:BindToClose`.
 - **Prueba:** jugar una ronda, salir, volver a entrar — las stats persisten. Probar también un fallo simulado de DataStore (pcall no debe tumbar el server).
 
-## Fase 7 — Pulido y balance
+## Fase 8 — Pulido y balance
 
 - [ ] Ajustes reales en el panel de Ajustes (sensibilidad, volumen si aplica, no solo el toggle de música).
 - [ ] Balancing de velocidades/tiempos según feedback de playtesting.
 - [ ] Bug bash general con `multiplayer_playtest`.
 
-## Fase 8 — Preparación de release
+## Fase 9 — Preparación de release
 
 - [ ] Ícono y thumbnails del juego.
 - [ ] Revisión final de textos/UI en español.
@@ -70,4 +77,4 @@ Regla elegida: el Clown gana si atrapa a todos los sobrevivientes antes de que s
 
 ---
 
-**Nota:** las fases 2–8 son un esqueleto razonable, no un compromiso cerrado. Cuando se defina mejor la mecánica exacta (¿el clown es un jugador o un NPC? ¿hay objetivos que recolectar o es solo escapar?), esta lista se ajusta.
+**Nota:** las fases 2–4 y 7–9 son un esqueleto razonable, no un compromiso cerrado (la Fase 6 de dependencias ya quedó fija). Cuando se defina mejor la mecánica exacta (¿el clown es un jugador o un NPC? ¿hay objetivos que recolectar o es solo escapar?), esta lista se ajusta.

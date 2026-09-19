@@ -6,3 +6,6 @@
 /*.rbxl.lock
 
 sourcemap.json
+
+# Wally packages are regenerated from wally.toml/wally.lock via `wally install`
+/Packages/
