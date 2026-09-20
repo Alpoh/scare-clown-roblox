@@ -77,7 +77,7 @@ function MainMenu.init()
 	titleShadow.Position = UDim2.new(0.5, 5, 0.22, 5)
 	titleShadow.Size = UDim2.new(0.9, 0, 0.16, 0)
 	titleShadow.BackgroundTransparency = 1
-	titleShadow.Text = "SCARECLOWN"
+	titleShadow.Text = "PAYASO TERRORÍFICO"
 	titleShadow.Font = Enum.Font.Bangers
 	titleShadow.TextScaled = true
 	titleShadow.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -91,7 +91,7 @@ function MainMenu.init()
 	title.Position = UDim2.new(0.5, 0, 0.22, 0)
 	title.Size = UDim2.new(0.9, 0, 0.16, 0)
 	title.BackgroundTransparency = 1
-	title.Text = "SCARECLOWN"
+	title.Text = "PAYASO TERRORÍFICO"
 	title.Font = Enum.Font.Bangers
 	title.TextScaled = true
 	title.TextColor3 = Color3.fromRGB(240, 195, 45)
