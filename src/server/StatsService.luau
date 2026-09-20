@@ -14,6 +14,8 @@ local StatsService = {}
 
 local dataStore = DataStoreService:GetDataStore(STORE_NAME)
 local cache = {}
+local roundStartTime = {}
+local roundStarted = false
 
 local function attemptAsync(fn, attemptsLeft)
 	return Promise.new(function(resolve, reject)
@@ -62,6 +64,16 @@ function StatsService.getStats(player)
 	return getCached(player)
 end
 
+local function ensureStatsRemote()
+	local remote = ReplicatedStorage:FindFirstChild("GetPlayerStats")
+	if not remote then
+		remote = Instance.new("RemoteFunction")
+		remote.Name = "GetPlayerStats"
+		remote.Parent = ReplicatedStorage
+	end
+	return remote
+end
+
 local function onPlayerAdded(player)
 	loadStats(player.UserId)
 		:andThen(function(data)
@@ -86,6 +98,12 @@ local function onPlayerRemoving(player)
 end
 
 function StatsService.init(RoundManager, RoleManager, CatchManager)
+	local statsRemote = ensureStatsRemote()
+
+	statsRemote.OnServerInvoke = function(player)
+		return StatsService.getStats(player)
+	end
+
 	for _, player in ipairs(Players:GetPlayers()) do
 		onPlayerAdded(player)
 	end
@@ -94,8 +112,19 @@ function StatsService.init(RoundManager, RoleManager, CatchManager)
 
 	RoundManager.StateChanged:Connect(function(state)
 		if state == RoundState.Playing then
+			roundStarted = true
+			roundStartTime = {}
 			for _, player in ipairs(Players:GetPlayers()) do
+				roundStartTime[player.UserId] = os.clock()
 				updateCached(player, "RoundsPlayed")
+			end
+		elseif state == RoundState.Ended then
+			roundStarted = false
+			for _, player in ipairs(Players:GetPlayers()) do
+				local stats = getCached(player)
+				if stats then
+					cache[player.UserId] = PlayerStats.resetWinStreak(stats)
+				end
 			end
 		end
 	end)
@@ -107,7 +136,18 @@ function StatsService.init(RoundManager, RoleManager, CatchManager)
 	end)
 
 	CatchManager.PlayerCaught:Connect(function(victim)
-		updateCached(victim, "TimesCaught")
+		if victim then
+			updateCached(victim, "TimesCaught")
+
+			local startTime = roundStartTime[victim.UserId]
+			if startTime and roundStarted then
+				local survivedSeconds = os.clock() - startTime
+				local current = getCached(victim)
+				if current then
+					cache[victim.UserId] = PlayerStats.recordSurvivalTime(current, survivedSeconds)
+				end
+			end
+		end
 	end)
 
 	game:BindToClose(function()
