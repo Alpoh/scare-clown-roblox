@@ -7,12 +7,22 @@ local ListUtils = require(ReplicatedStorage.Shared.ListUtils)
 
 local SpawnManager = {}
 
+local CLOWN_SPAWN_DELAY = 3
+
 local function getMap()
 	return Workspace:WaitForChild("Map")
 end
 
 local function getGate()
 	return getMap():WaitForChild("LobbyGate")
+end
+
+local function getMazeSpawnZone(mazeId)
+	local maze = getMap():FindFirstChild(mazeId)
+	if maze then
+		return maze:FindFirstChild("SpawnZone")
+	end
+	return nil
 end
 
 local function getPlayAreaSpawnPoints()
@@ -29,28 +39,49 @@ local function setGateOpen(isOpen)
 	gate.Transparency = isOpen and 0.85 or 0.3
 end
 
-local function selectSpawnPool(isClown, clownSpawnPoints, survivorSpawnPoints)
-	if isClown and #clownSpawnPoints > 0 then
-		return clownSpawnPoints
-	end
-	return survivorSpawnPoints
-end
-
-local function sendPlayersToPlayArea(RoleManager)
-	local spawnPoints = getPlayAreaSpawnPoints()
-	local clownSpawnPoints = getClownSpawnPoints()
-	if #spawnPoints == 0 then
+local function spawnSurvivorsInMaze(mazeId, RoleManager)
+	local spawnZone = getMazeSpawnZone(mazeId)
+	if not spawnZone then
 		return
 	end
+
 	local clown = RoleManager and RoleManager.getClown()
 	for _, player in ipairs(Players:GetPlayers()) do
 		local character = player.Character
-		if character then
-			local pool = selectSpawnPool(player == clown, clownSpawnPoints, spawnPoints)
-			local point = ListUtils.pickRandom(pool)
-			character:PivotTo(point.CFrame + Vector3.new(0, 3, 0))
+		if character and player ~= clown then
+			local offsetX = math.random(-7, 7)
+			local offsetZ = math.random(-7, 7)
+			local spawnPos = spawnZone.Position + Vector3.new(offsetX, 3, offsetZ)
+			character:PivotTo(CFrame.new(spawnPos))
 		end
 	end
+end
+
+local function spawnClownInMaze(mazeId, RoleManager)
+	task.delay(CLOWN_SPAWN_DELAY, function()
+		local spawnZone = getMazeSpawnZone(mazeId)
+		if not spawnZone then
+			return
+		end
+
+		local clown = RoleManager and RoleManager.getClown()
+		if clown and clown.Character then
+			local offsetX = math.random(-7, 7)
+			local offsetZ = math.random(-7, 7)
+			local spawnPos = spawnZone.Position + Vector3.new(offsetX, 3, offsetZ)
+			clown.Character:PivotTo(CFrame.new(spawnPos))
+		end
+	end)
+end
+
+local function sendPlayersToPlayArea(RoleManager, MazeVotingService)
+	if not MazeVotingService then
+		return
+	end
+
+	local winningMaze = MazeVotingService.tallyVotes()
+	spawnSurvivorsInMaze(winningMaze, RoleManager)
+	spawnClownInMaze(winningMaze, RoleManager)
 end
 
 local function sendPlayersToLobby()
@@ -59,23 +90,26 @@ local function sendPlayersToLobby()
 	end
 end
 
-local function applyState(state, RoleManager)
+local function applyState(state, RoleManager, MazeVotingService)
 	if state == RoundState.Playing then
 		setGateOpen(true)
-		sendPlayersToPlayArea(RoleManager)
+		sendPlayersToPlayArea(RoleManager, MazeVotingService)
 	elseif state == RoundState.Waiting then
 		setGateOpen(false)
 		sendPlayersToLobby()
+		if MazeVotingService then
+			MazeVotingService.resetForNewRound()
+		end
 	elseif state == RoundState.Ended then
 		setGateOpen(false)
 	end
 end
 
-function SpawnManager.init(RoundManager, RoleManager)
-	applyState(RoundManager.getState(), RoleManager)
+function SpawnManager.init(RoundManager, RoleManager, MazeVotingService)
+	applyState(RoundManager.getState(), RoleManager, MazeVotingService)
 
 	RoundManager.StateChanged:Connect(function(state)
-		applyState(state, RoleManager)
+		applyState(state, RoleManager, MazeVotingService)
 	end)
 end
 
