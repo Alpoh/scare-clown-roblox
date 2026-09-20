@@ -74,7 +74,7 @@ local function spawnClownInMaze(mazeId, RoleManager)
 	end)
 end
 
-local function sendPlayersToPlayArea(RoleManager, MazeVotingService)
+local function sendPlayersToPlayArea(RoleManager, MazeVotingService, PowerUpService)
 	if not MazeVotingService then
 		return
 	end
@@ -82,6 +82,10 @@ local function sendPlayersToPlayArea(RoleManager, MazeVotingService)
 	local winningMaze = MazeVotingService.tallyVotes()
 	spawnSurvivorsInMaze(winningMaze, RoleManager)
 	spawnClownInMaze(winningMaze, RoleManager)
+
+	if PowerUpService then
+		PowerUpService.spawnPowerUpsForMaze(winningMaze)
+	end
 end
 
 local function sendPlayersToLobby()
@@ -90,10 +94,10 @@ local function sendPlayersToLobby()
 	end
 end
 
-local function applyState(state, RoleManager, MazeVotingService)
+local function applyState(state, RoleManager, MazeVotingService, PowerUpService)
 	if state == RoundState.Playing then
 		setGateOpen(true)
-		sendPlayersToPlayArea(RoleManager, MazeVotingService)
+		sendPlayersToPlayArea(RoleManager, MazeVotingService, PowerUpService)
 	elseif state == RoundState.Waiting then
 		setGateOpen(false)
 		sendPlayersToLobby()
@@ -105,11 +109,11 @@ local function applyState(state, RoleManager, MazeVotingService)
 	end
 end
 
-function SpawnManager.init(RoundManager, RoleManager, MazeVotingService)
-	applyState(RoundManager.getState(), RoleManager, MazeVotingService)
+function SpawnManager.init(RoundManager, RoleManager, MazeVotingService, PowerUpService)
+	applyState(RoundManager.getState(), RoleManager, MazeVotingService, PowerUpService)
 
 	RoundManager.StateChanged:Connect(function(state)
-		applyState(state, RoleManager, MazeVotingService)
+		applyState(state, RoleManager, MazeVotingService, PowerUpService)
 	end)
 end
 
