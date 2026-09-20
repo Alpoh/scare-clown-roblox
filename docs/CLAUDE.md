@@ -122,11 +122,11 @@ Tres paquetes de Wally que reemplazan patrones ad-hoc que ya aparecían en el c�
 ## Versionado
 
 - `src/shared/GameVersion.luau` es la única fuente de verdad del número de versión del juego (semver: `MAYOR.MENOR.PARCHE`). Se muestra en la esquina inferior derecha del menú principal.
-- **Regla obligatoria: al cerrar cada fase del `docs/PLAN.md` siempre se hace bump de versión**, nunca se pasa a la siguiente fase sin subir el número. Qué campo subir depende de lo que trajo esa fase, no es automático:
-  - MENOR (`0.X.0`) — la fase agregó una mecánica o sistema nuevo jugable (p. ej. estado de ronda, rol del clown, condición de victoria).
-  - PARCHE (`0.1.X`) — la fase fue un ajuste, fix o pulido sobre algo que ya existía, sin mecánica nueva.
+- **Regla obligatoria: siempre se hace bump de versión al cerrar cada sesión de desarrollo significativa**, nunca se commitea sin subir el número cuando hay cambios jugables o características nuevas. Qué campo subir depende de lo que trajo la sesión, no es automático:
+  - MENOR (`0.X.0`) — se agregó una mecánica o sistema nuevo jugable (p. ej. votación de laberintos, condición de victoria, rol del clown).
+  - PARCHE (`0.1.X`) — fue un ajuste, fix, pulido o cambio estético sobre algo que ya existía, sin mecánica nueva.
   - MAYOR (`X.0.0`) — reservado para el primer release público, no se usa durante el desarrollo por fases.
-- Subir el número en `GameVersion.luau`, commitear, y etiquetar ese commit con `git tag vX.Y.Z` (`git push --tags`). El tag de git y el valor del archivo siempre deben coincidir.
+- Flujo: Editar `GameVersion.luau` con el nuevo número, hacer commit con el bump en el mensaje, crear tag con `git tag vX.Y.Z`, y hacer push con `git push origin main --tags`. El tag de git y el valor del archivo siempre deben coincidir.
 
 ## Git
 
