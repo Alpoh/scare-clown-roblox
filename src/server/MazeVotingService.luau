@@ -55,6 +55,22 @@ local function hideMazes(exceptMazeId)
 			floor.CanCollide = visible
 		end
 	end
+
+	local lobbyWalls = {
+		"LobbyWallNorth",
+		"LobbyWallSouth",
+		"LobbyWallEast",
+		"LobbyWallWest",
+		"LobbyGate",
+		"LobbyFloor"
+	}
+	for _, wallName in ipairs(lobbyWalls) do
+		local wall = Map:FindFirstChild(wallName)
+		if wall then
+			wall.Transparency = 0
+			wall.CanCollide = true
+		end
+	end
 end
 
 function MazeVotingService.init()
