@@ -15,6 +15,7 @@ local currentState = RoundState.Waiting
 local stateDuration = 0
 local stateStartClock = 0
 local endPlayingRequested = false
+local difficultyManager = nil
 
 local function ensureRemote()
 	local remote = ReplicatedStorage:FindFirstChild("RoundStateChanged")
@@ -42,7 +43,8 @@ function RoundManager.endPlayingEarly()
 	endPlayingRequested = true
 end
 
-function RoundManager.init()
+function RoundManager.init(DifficultyMgr)
+	difficultyManager = DifficultyMgr
 	roundStateChangedEvent = ensureRemote()
 
 	Players.PlayerAdded:Connect(function(player)
@@ -70,6 +72,10 @@ function RoundManager.init()
 
 			setState(RoundState.Ended, RoundConfig.Ended)
 			task.wait(RoundConfig.Ended)
+
+			if difficultyManager then
+				difficultyManager.nextRound()
+			end
 		end
 	end)
 end

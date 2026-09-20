@@ -3,8 +3,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local RoundState = require(ReplicatedStorage.Shared.RoundState)
 local ListUtils = require(ReplicatedStorage.Shared.ListUtils)
+local ClownVariants = require(ReplicatedStorage.Shared.ClownVariants)
+local DifficultyManager = require(script.Parent.DifficultyManager)
 
-local CLOWN_WALK_SPEED = 19
 local CLOWN_COLOR = Color3.fromRGB(230, 60, 30)
 
 local RoleManager = {}
@@ -14,6 +15,7 @@ RoleManager.RoleAssigned = roleAssignedBindable.Event
 
 local clownAssignedRemote
 local currentClown = nil
+local currentClownVariant = nil
 
 local function ensureRemote()
 	local remote = ReplicatedStorage:FindFirstChild("ClownAssigned")
@@ -25,14 +27,16 @@ local function ensureRemote()
 	return remote
 end
 
-local function applyClownAppearance(clown)
+local function applyClownAppearance(clown, variant)
 	local character = clown.Character
 	if not character then
 		return
 	end
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	if humanoid then
-		humanoid.WalkSpeed = CLOWN_WALK_SPEED
+		local speedMultiplier = DifficultyManager.getSpeedMultiplier()
+		humanoid.WalkSpeed = variant.walkSpeed * speedMultiplier
+		humanoid.JumpHeight = variant.jumpHeight
 	end
 	for _, descendant in ipairs(character:GetDescendants()) do
 		if descendant:IsA("BasePart") then
@@ -44,7 +48,9 @@ end
 local function assignRoles()
 	currentClown = ListUtils.pickRandom(Players:GetPlayers())
 	if currentClown then
-		applyClownAppearance(currentClown)
+		local variantName = ClownVariants.getRandomVariant()
+		currentClownVariant = ClownVariants.getVariant(variantName)
+		applyClownAppearance(currentClown, currentClownVariant)
 	end
 	clownAssignedRemote:FireAllClients(currentClown)
 	roleAssignedBindable:Fire(currentClown)
@@ -58,7 +64,11 @@ function RoleManager.isClown(player)
 	return player ~= nil and player == currentClown
 end
 
-function RoleManager.init(RoundManager)
+function RoleManager.getClownVariant()
+	return currentClownVariant
+end
+
+function RoleManager.init(RoundManager, DifficultyMgr)
 	clownAssignedRemote = ensureRemote()
 
 	RoundManager.StateChanged:Connect(function(state)
