@@ -18,6 +18,9 @@ local MIN_PLAYERS_TO_START = 2
 
 local zoneCounter = {}
 local countdownActive = false
+local launchCountdownActive = false
+local launchCountdownZone = nil
+local launchCountdownRemaining = 0
 
 local function createPlayerCountZones()
 	local Map = Workspace:FindFirstChild("Map")
@@ -118,11 +121,44 @@ local function updateZoneCounters()
 			if gui then
 				local textPart = gui:FindFirstChild("Label")
 				if textPart then
-					textPart.Text = tostring(data.count) .. " JUGADORES\n(" .. tostring(#players) .. " aquí)"
+					local displayText = tostring(data.count) .. " JUGADORES\n(" .. tostring(#players) .. " aquí)"
+					if launchCountdownActive and launchCountdownZone == zone then
+						displayText = displayText .. "\n¡INICIA EN " .. tostring(launchCountdownRemaining) .. "!"
+					end
+					textPart.Text = displayText
 				end
 			end
 		end
 	end
+end
+
+local function startLaunchCountdown(zone)
+	if launchCountdownActive then
+		return
+	end
+
+	launchCountdownActive = true
+	launchCountdownZone = zone
+	launchCountdownRemaining = 5
+
+	for i = 5, 1, -1 do
+		launchCountdownRemaining = i
+		updateZoneCounters()
+		task.wait(1)
+
+		local currentPlayers = getPlayersInZone(zone)
+		local targetCount = zoneCounter[zone].count
+		if #currentPlayers < targetCount then
+			launchCountdownActive = false
+			launchCountdownZone = nil
+			updateZoneCounters()
+			return
+		end
+	end
+
+	launchCountdownActive = false
+	launchCountdownZone = nil
+	print("¡Iniciando juego con " .. zoneCounter[zone].count .. " jugadores!")
 end
 
 local function startCountdown()
@@ -165,9 +201,21 @@ function PlayerCountService.init(RoundManager)
 		if state == RoundState.Waiting then
 			if not lobbyConnectionActive then
 				lobbyConnectionActive = true
+				launchCountdownActive = false
 				task.spawn(function()
 					while RoundManager.getState() == RoundState.Waiting do
 						updateZoneCounters()
+
+						if not launchCountdownActive then
+							for zone, data in pairs(zoneCounter) do
+								local players = getPlayersInZone(zone)
+								if #players >= data.count then
+									startLaunchCountdown(zone)
+									break
+								end
+							end
+						end
+
 						task.wait(0.5)
 					end
 					lobbyConnectionActive = false
