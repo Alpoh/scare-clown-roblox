@@ -12,6 +12,11 @@ local PROXIMITY_RANGES = {
 }
 
 local function getClosestSalvationZone()
+	local player = Players.LocalPlayer
+	if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+		return nil
+	end
+
 	local Map = Workspace:FindFirstChild("Map")
 	if not Map then
 		return nil
@@ -24,7 +29,7 @@ local function getClosestSalvationZone()
 		if mazeFolder:IsA("Folder") and mazeFolder.Name:match("Maze") then
 			local salvationZone = mazeFolder:FindFirstChild("SpawnZone")
 			if salvationZone then
-				local distance = (salvationZone.Position - Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+				local distance = (salvationZone.Position - player.Character.HumanoidRootPart.Position).Magnitude
 				if distance < minDistance then
 					minDistance = distance
 					closest = salvationZone

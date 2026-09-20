@@ -41,7 +41,7 @@ function StatsUI.createStatsLabel()
 	label.Size = UDim2.new(0.95, 0, 0.04, 0)
 	label.BackgroundTransparency = 0.2
 	label.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-	label.Font = Enum.Font.GothamMonospace
+	label.Font = Enum.Font.Code
 	label.TextScaled = true
 	label.TextColor3 = Color3.fromRGB(200, 200, 200)
 	label.Parent = screenGui
